@@ -1,7 +1,0 @@
-maze_file,heuristic,success,cost,exact_cost,correct,nodes_explored,running_time,memory_mb
-maze_simple.json,euclidean,True,80,80,True,2024,37.04928493499756,0.34610748291015625
-maze_simple.json,manhattan,True,80,80,True,1661,30.717918634414673,0.3140716552734375
-maze_corridor.json,euclidean,True,92,92,True,2188,40.229942083358765,0.345947265625
-maze_corridor.json,manhattan,True,92,92,True,1838,33.7167546749115,0.31418609619140625
-maze_complex.json,euclidean,True,94,94,True,2295,41.04887413978577,0.34105682373046875
-maze_complex.json,manhattan,True,94,94,True,2204,39.36585021018982,0.3157958984375

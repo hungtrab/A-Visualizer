@@ -469,11 +469,11 @@ def save_maze(grid, start, end, filename):
         json.dump(maze_data, f, indent=2)
     print(f"Maze saved to {filename}")
 
-# Load maze from file
-def load_maze(filename, rows):
+# Load maze from file (auto-detects grid size from JSON)
+def load_maze(filename):
     if not os.path.exists(filename):
         print(f"File {filename} not found")
-        return None, None, None
+        return None, None, None, None
     
     try:
         with open(filename, 'r') as f:
@@ -482,7 +482,11 @@ def load_maze(filename, rows):
         # Validate JSON structure
         if not all(key in maze_data for key in ["rows", "start", "end", "barriers"]):
             print(f"Error: JSON structure doesn't match. Required keys: rows, start, end, barriers")
-            return None, None, None
+            return None, None, None, None
+        
+        # Auto-detect grid size from maze file
+        rows = maze_data["rows"]
+        print(f"Loading maze with grid size {rows}x{rows}")
         
         grid = make_grid(rows, GRID_WIDTH)
         
@@ -505,13 +509,13 @@ def load_maze(filename, rows):
             if r < rows and c < rows:
                 grid[r][c].make_barrier()
         
-        return grid, start, end
+        return grid, start, end, rows
     except json.JSONDecodeError:
         print(f"Error: Invalid JSON format in {filename}")
-        return None, None, None
+        return None, None, None, None
     except Exception as e:
         print(f"Error loading maze: {e}")
-        return None, None, None
+        return None, None, None, None
 
 # Generate random maze
 def generate_random_maze(grid, density=0.3, seed=None):
@@ -781,7 +785,7 @@ def benchmark_worker(task_queue, result_queue, grid_width):
         result_queue.put(result)
 
 # Run benchmark (sequential)
-def run_benchmark(test_folder="test_mazes", visualize=False, win=None, rows=50):
+def run_benchmark(test_folder="test_mazes", visualize=False, win=None):
     if not os.path.exists(test_folder):
         print(f"Test folder {test_folder} not found")
         return
@@ -799,8 +803,8 @@ def run_benchmark(test_folder="test_mazes", visualize=False, win=None, rows=50):
             global HEURISTIC
             HEURISTIC = heuristic_type
             
-            # Load maze
-            grid, start, end = load_maze(filepath, rows)
+            # Load maze (auto-detects grid size)
+            grid, start, end, rows = load_maze(filepath)
             
             if not grid or not start or not end:
                 print(f"Failed to load {maze_file}")
@@ -836,8 +840,8 @@ def run_benchmark(test_folder="test_mazes", visualize=False, win=None, rows=50):
             running_time = end_time - start_time
             memory_used = peak / 1024 / 1024  # Convert to MB
             
-            # Check correctness
-            correct = (cost == exact_cost) if success else False
+            # Check correctness (if A* fails and BFS also finds no path, it's still correct)
+            correct = (cost == exact_cost) if success else (exact_cost == float('inf'))
             
             result = {
                 "maze_file": maze_file,
@@ -862,7 +866,7 @@ def run_benchmark(test_folder="test_mazes", visualize=False, win=None, rows=50):
     
     # Save results to CSV
     if results:
-        output_file = "benchmark_results.csv"
+        output_file = f"benchmark_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
         with open(output_file, 'w', newline='') as f:
             writer = csv.DictWriter(f, fieldnames=results[0].keys())
             writer.writeheader()
@@ -872,18 +876,24 @@ def run_benchmark(test_folder="test_mazes", visualize=False, win=None, rows=50):
     return results
 
 # Run parallel benchmark (4 processes at a time)
-def run_benchmark_parallel(test_folder="test_mazes", rows=50, batch_size=4):
+def run_benchmark_parallel(test_folder="test_mazes", batch_size=4):
     if not os.path.exists(test_folder):
         print(f"Test folder {test_folder} not found")
         return
     
-    # Get all maze files
+    # Get all maze files and read their grid sizes
     maze_files = [f for f in os.listdir(test_folder) if f.endswith('.json')]
     
-    # Create task list
+    # Create task list - read rows from each maze file
     tasks = []
     for maze_file in maze_files:
         filepath = os.path.join(test_folder, maze_file)
+        try:
+            with open(filepath, 'r') as f:
+                maze_data = json.load(f)
+            rows = maze_data.get("rows", 50)
+        except:
+            rows = 50
         for heuristic_type in ["euclidean", "manhattan"]:
             tasks.append((filepath, heuristic_type, rows))
     
@@ -926,7 +936,7 @@ def run_benchmark_parallel(test_folder="test_mazes", rows=50, batch_size=4):
     
     # Save results to CSV
     if results:
-        output_file = "benchmark_results.csv"
+        output_file = f"benchmark_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
         with open(output_file, 'w', newline='') as f:
             writer = csv.DictWriter(f, fieldnames=results[0].keys())
             writer.writeheader()
@@ -936,7 +946,7 @@ def run_benchmark_parallel(test_folder="test_mazes", rows=50, batch_size=4):
     return results
 
 # Visual parallel benchmark with 4 simultaneous displays
-def run_benchmark_visual_parallel(test_folder="test_mazes", rows=50, batch_size=4):
+def run_benchmark_visual_parallel(test_folder="test_mazes", batch_size=4):
     if not os.path.exists(test_folder):
         print(f"Test folder {test_folder} not found")
         return
@@ -948,12 +958,12 @@ def run_benchmark_visual_parallel(test_folder="test_mazes", rows=50, batch_size=
     # Get all maze files
     maze_files = [f for f in os.listdir(test_folder) if f.endswith('.json')]
     
-    # Create task list (only with one heuristic per batch for visual clarity)
+    # Create task list (read rows from each maze file)
     tasks = []
     for maze_file in maze_files:
         filepath = os.path.join(test_folder, maze_file)
         for heuristic_type in ["euclidean", "manhattan"]:
-            tasks.append((filepath, heuristic_type, rows))
+            tasks.append((filepath, heuristic_type))
     
     results = []
     
@@ -968,8 +978,8 @@ def run_benchmark_visual_parallel(test_folder="test_mazes", rows=50, batch_size=
         
         # Load all mazes for this batch
         batch_data = []
-        for filepath, heuristic_type, r in batch:
-            grid, start, end = load_maze(filepath, r)
+        for filepath, heuristic_type in batch:
+            grid, start, end, rows = load_maze(filepath)
             if grid and start and end:
                 for row in grid:
                     for spot in row:
@@ -978,6 +988,7 @@ def run_benchmark_visual_parallel(test_folder="test_mazes", rows=50, batch_size=
                     "grid": grid,
                     "start": start,
                     "end": end,
+                    "rows": rows,
                     "filepath": filepath,
                     "heuristic": heuristic_type,
                     "done": False,
@@ -1128,7 +1139,7 @@ def run_benchmark_visual_parallel(test_folder="test_mazes", rows=50, batch_size=
     
     # Save results to CSV
     if results:
-        output_file = "benchmark_results.csv"
+        output_file = f"benchmark_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
         fieldnames = ["maze_file", "heuristic", "success", "cost", "nodes_explored", "running_time"]
         with open(output_file, 'w', newline='') as f:
             writer = csv.DictWriter(f, fieldnames=fieldnames)
@@ -1237,10 +1248,10 @@ def main(win, width):
         filename = show_file_browser(win)
         
         if filename:
-            result = load_maze(filename, ROWS)
+            result = load_maze(filename)
             if result[0]:
-                grid, start, end = result
-                print(f"Loaded {filename}")
+                grid, start, end, ROWS = result
+                print(f"Loaded {filename} (grid size: {ROWS}x{ROWS})")
             else:
                 print(f"Failed to load {filename} - check JSON structure")
     
@@ -1251,17 +1262,17 @@ def main(win, width):
     
     def run_benchmark_visualized():
         print("\n=== Running Benchmark Mode (With Visualization) ===")
-        run_benchmark(visualize=True, win=win, rows=ROWS)
+        run_benchmark(visualize=True, win=win)
         print("=== Benchmark Complete ===\n")
     
     def run_benchmark_parallel_mode():
         print("\n=== Running Parallel Benchmark (4 at a time) ===")
-        run_benchmark_parallel(rows=ROWS, batch_size=4)
+        run_benchmark_parallel(batch_size=4)
         print("=== Benchmark Complete ===\n")
     
     def run_benchmark_visual_parallel_mode():
         print("\n=== Running Visual Parallel Benchmark (4 at a time) ===")
-        run_benchmark_visual_parallel(rows=ROWS, batch_size=4)
+        run_benchmark_visual_parallel(batch_size=4)
         print("=== Benchmark Complete ===\n")
     
     buttons = [
