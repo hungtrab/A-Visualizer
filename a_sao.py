@@ -13,12 +13,13 @@ import multiprocessing as mp
 from datetime import datetime
 
 SLEEP = 0
+FULLSCREEN = False
 
 # App config
 PANEL_WIDTH = 250
 GRID_WIDTH = 800
 WIDTH = GRID_WIDTH + PANEL_WIDTH
-WIN = pygame.display.set_mode((WIDTH, GRID_WIDTH))
+WIN = pygame.display.set_mode((WIDTH, GRID_WIDTH), pygame.RESIZABLE)
 pygame.display.set_caption("A* Pathfinding Visualization")
 pygame.font.init()
 FONT = pygame.font.SysFont('Arial', 16)
@@ -645,9 +646,6 @@ def benchmark_worker(task_queue, result_queue, grid_width):
         filepath, heuristic_type, rows = task
         maze_file = os.path.basename(filepath)
         
-        # Need to initialize pygame in this process for grid creation
-        # But we won't display - just compute
-        
         # Load maze data directly
         try:
             with open(filepath, 'r') as f:
@@ -662,7 +660,6 @@ def benchmark_worker(task_queue, result_queue, grid_width):
         for i in range(rows):
             grid.append([])
             for j in range(rows):
-                # Simple spot representation for computation
                 grid[i].append({"row": i, "col": j, "is_barrier": False, "neighbors": []})
         
         # Set barriers
@@ -784,98 +781,7 @@ def benchmark_worker(task_queue, result_queue, grid_width):
         
         result_queue.put(result)
 
-# Run benchmark (sequential)
-def run_benchmark(test_folder="test_mazes", visualize=False, win=None):
-    if not os.path.exists(test_folder):
-        print(f"Test folder {test_folder} not found")
-        return
-    
-    results = []
-    
-    # Get all maze files
-    maze_files = [f for f in os.listdir(test_folder) if f.endswith('.json')]
-    
-    for maze_file in maze_files:
-        filepath = os.path.join(test_folder, maze_file)
-        print(f"\nTesting {maze_file}...")
-        
-        for heuristic_type in ["euclidean", "manhattan"]:
-            global HEURISTIC
-            HEURISTIC = heuristic_type
-            
-            # Load maze (auto-detects grid size)
-            grid, start, end, rows = load_maze(filepath)
-            
-            if not grid or not start or not end:
-                print(f"Failed to load {maze_file}")
-                continue
-            
-            # Update neighbors
-            for row in grid:
-                for spot in row:
-                    spot.update_neighbors(grid)
-            
-            # Get exact solution with BFS
-            exact_cost = bfs_shortest_path(grid, start, end)
-            
-            # Run A* with memory and time tracking
-            tracemalloc.start()
-            start_time = time.time()
-            
-            if visualize and win:
-                # Visualize the benchmark run
-                def draw_func():
-                    draw(win, grid, rows, GRID_WIDTH)
-                    draw_panel_benchmark(win, maze_file, heuristic_type)
-                    pygame.display.update()
-                
-                success, cost, nodes_explored = algorithm(draw_func, grid, start, end, visualize=True)
-            else:
-                success, cost, nodes_explored = algorithm(None, grid, start, end, visualize=False)
-            
-            end_time = time.time()
-            current, peak = tracemalloc.get_traced_memory()
-            tracemalloc.stop()
-            
-            running_time = end_time - start_time
-            memory_used = peak / 1024 / 1024  # Convert to MB
-            
-            # Check correctness (if A* fails and BFS also finds no path, it's still correct)
-            correct = (cost == exact_cost) if success else (exact_cost == float('inf'))
-            
-            result = {
-                "maze_file": maze_file,
-                "heuristic": heuristic_type,
-                "success": success,
-                "cost": cost,
-                "exact_cost": exact_cost,
-                "correct": correct,
-                "nodes_explored": nodes_explored,
-                "running_time": running_time,
-                "memory_mb": memory_used
-            }
-            
-            results.append(result)
-            print(f"  {heuristic_type}: Cost={cost}, Time={running_time:.4f}s, Nodes={nodes_explored}, Correct={correct}")
-            
-            if visualize and win:
-                # Save screenshot after each test
-                screenshot_name = f"screenshots/benchmark_{maze_file}_{heuristic_type}.png"
-                save_screenshot(win, screenshot_name)
-                sleep(1)  # Pause between tests when visualizing
-    
-    # Save results to CSV
-    if results:
-        output_file = f"benchmark_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
-        with open(output_file, 'w', newline='') as f:
-            writer = csv.DictWriter(f, fieldnames=results[0].keys())
-            writer.writeheader()
-            writer.writerows(results)
-        print(f"\nResults saved to {output_file}")
-    
-    return results
-
-# Run parallel benchmark (4 processes at a time)
+# Run parallel benchmark (4 processes at a time, headless)
 def run_benchmark_parallel(test_folder="test_mazes", batch_size=4):
     if not os.path.exists(test_folder):
         print(f"Test folder {test_folder} not found")
@@ -946,244 +852,290 @@ def run_benchmark_parallel(test_folder="test_mazes", batch_size=4):
     return results
 
 # Visual parallel benchmark with 4 simultaneous displays
-def run_benchmark_visual_parallel(test_folder="test_mazes", batch_size=4):
-    if not os.path.exists(test_folder):
-        print(f"Test folder {test_folder} not found")
+def run_benchmark_visual_parallel(win, batch_size=4):
+    """Run benchmark with 4 mazes visualized simultaneously in 2x2 grid"""
+    maze_folder = "test_mazes"
+    if not os.path.exists(maze_folder):
+        print("No test_mazes folder found!")
         return
     
-    # Create screenshots folder
-    if not os.path.exists("screenshots"):
-        os.makedirs("screenshots")
+    maze_files = [f for f in os.listdir(maze_folder) if f.endswith('.json')]
+    if not maze_files:
+        print("No maze files found!")
+        return
     
-    # Get all maze files
-    maze_files = [f for f in os.listdir(test_folder) if f.endswith('.json')]
-    
-    # Create task list (read rows from each maze file)
-    tasks = []
-    for maze_file in maze_files:
-        filepath = os.path.join(test_folder, maze_file)
-        for heuristic_type in ["euclidean", "manhattan"]:
-            tasks.append((filepath, heuristic_type))
+    # Create test configurations (each maze with both heuristics)
+    tests = []
+    for maze_file in sorted(maze_files):
+        tests.append((maze_file, "euclidean"))
+        tests.append((maze_file, "manhattan"))
     
     results = []
+    batch_size = 4
+    total_batches = (len(tests) + batch_size - 1) // batch_size
     
-    # Calculate grid layout for 4 simultaneous views
-    cell_width = GRID_WIDTH // 2
-    cell_height = GRID_WIDTH // 2
+    # Border and text settings
+    BORDER_WIDTH = 4
+    BORDER_COLOR = (30, 30, 30)  # Dark gray border
+    TEXT_PADDING = 5
     
-    # Process in batches
-    for batch_idx in range(0, len(tasks), batch_size):
-        batch = tasks[batch_idx:batch_idx + batch_size]
-        print(f"\nProcessing visual batch {batch_idx // batch_size + 1}/{(len(tasks) + batch_size - 1) // batch_size}...")
+    for batch_idx in range(0, len(tests), batch_size):
+        batch = tests[batch_idx:batch_idx + batch_size]
+        batch_num = batch_idx // batch_size + 1
         
-        # Load all mazes for this batch
+        # Initialize batch data (store only maze data, not positions - those are calculated per frame)
         batch_data = []
-        for filepath, heuristic_type in batch:
-            grid, start, end, rows = load_maze(filepath)
-            if grid and start and end:
-                for row in grid:
-                    for spot in row:
-                        spot.update_neighbors(grid)
-                batch_data.append({
-                    "grid": grid,
-                    "start": start,
-                    "end": end,
-                    "rows": rows,
-                    "filepath": filepath,
-                    "heuristic": heuristic_type,
-                    "done": False,
-                    "result": None,
-                    "start_time": time.time()
-                })
-        
-        if not batch_data:
-            continue
-        
-        # Run all algorithms in batch simultaneously (step by step)
-        # Initialize algorithm states
-        for data in batch_data:
-            global HEURISTIC
-            HEURISTIC = data["heuristic"]
+        for i, (maze_file, heuristic) in enumerate(batch):
+            filepath = os.path.join(maze_folder, maze_file)
+            with open(filepath, 'r') as f:
+                maze_data = json.load(f)
             
-            data["open_set"] = PriorityQueue()
-            data["open_set_dict"] = {data["start"]}
-            data["open_set"].put((0, 0, data["start"]))
-            data["came_from"] = {}
-            data["g_score"] = {spot: float("inf") for row in data["grid"] for spot in row}
-            data["g_score"][data["start"]] = 0
-            data["f_score"] = {spot: float("inf") for row in data["grid"] for spot in row}
-            data["f_score"][data["start"]] = h(data["start"].get_pos(), data["end"].get_pos())
-            data["nodes_explored"] = 0
-            data["count"] = 0
-            data["heuristic_func"] = h_manhattan if data["heuristic"] == "manhattan" else h_euclidean
+            rows = maze_data["rows"]
+            
+            # Create grid for this maze (gap will be calculated dynamically)
+            grid = [[Spot(r, c, 1, rows) for c in range(rows)] for r in range(rows)]
+            
+            # Set barriers
+            for (r, c) in maze_data["barriers"]:
+                if 0 <= r < rows and 0 <= c < rows:
+                    grid[r][c].make_barrier()
+            
+            # Set start and end
+            sr, sc = maze_data["start"]
+            er, ec = maze_data["end"]
+            start = grid[sr][sc]
+            end = grid[er][ec]
+            start.make_start()
+            end.make_end()
+            
+            # Update neighbors and initialize g values for all spots
+            for row in grid:
+                for spot in row:
+                    spot.g = float('inf')
+                    spot.f = float('inf')
+                    spot.update_neighbors(grid)
+            
+            # Quadrant index (0=top-left, 1=top-right, 2=bottom-left, 3=bottom-right)
+            quadrant = i
+            
+            # Initialize A* data
+            count = 0
+            open_set = PriorityQueue()
+            start.g = 0
+            start.f = h(start.get_pos(), end.get_pos()) if heuristic == "euclidean" else h_manhattan(start.get_pos(), end.get_pos())
+            open_set.put((start.f, count, start))
+            open_set_hash = {start}
+            came_from = {}
+            
+            batch_data.append({
+                "maze_file": maze_file,
+                "heuristic": heuristic,
+                "grid": grid,
+                "start": start,
+                "end": end,
+                "rows": rows,
+                "quadrant": quadrant,
+                "open_set": open_set,
+                "open_set_hash": open_set_hash,
+                "came_from": came_from,
+                "count": count,
+                "finished": False,
+                "success": False,
+                "cost": float('inf'),
+                "start_time": time.time(),
+                "end_time": None,
+                "nodes_explored": 0
+            })
         
-        # Run until all done
-        all_done = False
-        while not all_done:
+        # Run all 4 simultaneously
+        all_finished = False
+        while not all_finished:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     pygame.quit()
-                    return results
+                    return
+                if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+                    return
             
-            all_done = True
+            all_finished = True
             
-            for idx, data in enumerate(batch_data):
-                if data["done"]:
-                    continue
-                
-                all_done = False
-                
-                # Take one step of A*
-                if data["open_set"].empty():
-                    data["done"] = True
-                    data["result"] = {"success": False, "cost": float('inf'), "nodes": data["nodes_explored"]}
-                    data["end_time"] = time.time()
-                    continue
-                
-                current = data["open_set"].get()[2]
-                if current in data["open_set_dict"]:
-                    data["open_set_dict"].remove(current)
-                data["nodes_explored"] += 1
-                
-                if current == data["end"]:
-                    # Reconstruct path
-                    temp = data["end"]
-                    while temp in data["came_from"]:
-                        temp = data["came_from"][temp]
-                        temp.make_path()
-                    data["end"].make_end()
-                    data["done"] = True
-                    data["result"] = {
-                        "success": True,
-                        "cost": data["g_score"][data["end"]],
-                        "nodes": data["nodes_explored"]
-                    }
-                    data["end_time"] = time.time()
-                    continue
-                
-                hfunc = data["heuristic_func"]
-                for neighbor in current.neighbors:
-                    temp_g = data["g_score"][current] + 1
-                    if temp_g < data["g_score"][neighbor]:
-                        data["came_from"][neighbor] = current
-                        data["g_score"][neighbor] = temp_g
-                        data["f_score"][neighbor] = temp_g + hfunc(neighbor.get_pos(), data["end"].get_pos())
-                        if neighbor not in data["open_set_dict"]:
-                            data["count"] += 1
-                            data["open_set"].put((data["f_score"][neighbor], data["count"], neighbor))
-                            data["open_set_dict"].add(neighbor)
-                            neighbor.make_open()
-                
-                if current != data["start"]:
-                    current.make_closed()
+            # Get current window size for adaptive rendering
+            win_width, win_height = win.get_size()
+            sub_width = win_width // 2
+            sub_height = win_height // 2
             
-            # Draw all grids in a 2x2 layout
-            WIN.fill(WHITE)
+            # Clear the entire window
+            win.fill(WHITE)
             
-            for idx, data in enumerate(batch_data):
-                x_offset = (idx % 2) * cell_width
-                y_offset = (idx // 2) * cell_height
+            for data in batch_data:
+                if not data["finished"]:
+                    all_finished = False
+                    
+                    # One step of A*
+                    if not data["open_set"].empty():
+                        current = data["open_set"].get()[2]
+                        data["open_set_hash"].discard(current)
+                        data["nodes_explored"] += 1
+                        
+                        if current == data["end"]:
+                            # Reconstruct path
+                            path_length = 0
+                            temp = current
+                            while temp in data["came_from"]:
+                                temp = data["came_from"][temp]
+                                path_length += 1
+                            data["cost"] = path_length
+                            data["success"] = True
+                            data["finished"] = True
+                            data["end_time"] = time.time()
+                            
+                            # Mark path
+                            temp = current
+                            while temp in data["came_from"]:
+                                temp = data["came_from"][temp]
+                                if temp != data["start"]:
+                                    temp.make_path()
+                        else:
+                            h_func = h if data["heuristic"] == "euclidean" else h_manhattan
+                            for neighbor in current.neighbors:
+                                temp_g = current.g + 1
+                                if temp_g < neighbor.g:
+                                    data["came_from"][neighbor] = current
+                                    neighbor.g = temp_g
+                                    neighbor.f = temp_g + h_func(neighbor.get_pos(), data["end"].get_pos())
+                                    if neighbor not in data["open_set_hash"]:
+                                        data["count"] += 1
+                                        data["open_set"].put((neighbor.f, data["count"], neighbor))
+                                        data["open_set_hash"].add(neighbor)
+                                        neighbor.make_open()
+                            
+                            if current != data["start"]:
+                                current.make_closed()
+                    else:
+                        data["finished"] = True
+                        data["success"] = False
+                        data["end_time"] = time.time()
                 
-                # Draw mini grid
+                # Calculate position and gap dynamically based on current window size
+                quadrant = data["quadrant"]
+                pos_x = (quadrant % 2) * sub_width
+                pos_y = (quadrant // 2) * sub_height
+                rows = data["rows"]
+                # Calculate gap to fill the entire quadrant
+                gap_x = sub_width / rows
+                gap_y = sub_height / rows
+                gap = min(gap_x, gap_y)
+                
+                # Draw this maze in its quadrant (no grid lines, just filled cells)
                 for row in data["grid"]:
                     for spot in row:
-                        # Scale spot position
-                        scaled_x = x_offset + (spot.x * cell_width // GRID_WIDTH)
-                        scaled_y = y_offset + (spot.y * cell_height // GRID_WIDTH)
-                        scaled_size = max(1, spot.width * cell_width // GRID_WIDTH)
-                        pygame.draw.rect(WIN, spot.color, (scaled_x, scaled_y, scaled_size, scaled_size))
+                        color = spot.color
+                        rect = pygame.Rect(
+                            pos_x + spot.col * gap,
+                            pos_y + spot.row * gap,
+                            gap + 1,  # +1 to prevent gaps between cells
+                            gap + 1
+                        )
+                        pygame.draw.rect(win, color, rect)
+            
+            # Draw 2x2 grid borders (thick lines separating quadrants)
+            # Vertical center line
+            pygame.draw.line(win, BORDER_COLOR, 
+                           (sub_width, 0), 
+                           (sub_width, win_height), BORDER_WIDTH)
+            # Horizontal center line
+            pygame.draw.line(win, BORDER_COLOR, 
+                           (0, sub_height), 
+                           (win_width, sub_height), BORDER_WIDTH)
+            
+            # Draw text labels with solid background for each quadrant
+            for data in batch_data:
+                # Recalculate position for text
+                quadrant = data["quadrant"]
+                text_pos_x = (quadrant % 2) * sub_width
+                text_pos_y = (quadrant // 2) * sub_height
                 
-                # Draw label
-                label = FONT_SMALL.render(f"{os.path.basename(data['filepath'])} - {data['heuristic']}", True, BLACK)
-                WIN.blit(label, (x_offset + 5, y_offset + 5))
+                # Prepare text
+                label_text = f"{data['maze_file']} - {data['heuristic']}"
+                if data["finished"]:
+                    if data["success"]:
+                        status_text = f"OK | Cost: {data['cost']} | Time: {data['end_time'] - data['start_time']:.3f}s"
+                        status_color = (0, 200, 0)  # Green
+                    else:
+                        status_text = f"FAIL | Cost: inf | Time: {data['end_time'] - data['start_time']:.3f}s"
+                        status_color = (255, 0, 0)  # Red
+                else:
+                    status_text = f"Running... | Nodes: {data['nodes_explored']}"
+                    status_color = (255, 165, 0)  # Orange
                 
-                if data["done"] and data["result"]:
-                    status = "OK" if data["result"]["success"] else "FAIL"
-                    exec_time = data["end_time"] - data["start_time"]
-                    info = FONT_SMALL.render(f"{status} | Cost: {data['result']['cost']:.0f} | Time: {exec_time:.3f}s", True, 
-                                             GREEN if data["result"]["success"] else RED)
-                    WIN.blit(info, (x_offset + 5, y_offset + 25))
+                # Render text
+                label_surface = FONT_SMALL.render(label_text, True, WHITE)
+                status_surface = FONT_SMALL.render(status_text, True, status_color)
+                
+                # Calculate text box dimensions
+                text_width = max(label_surface.get_width(), status_surface.get_width()) + TEXT_PADDING * 2
+                text_height = label_surface.get_height() + status_surface.get_height() + TEXT_PADDING * 3
+                
+                # Draw solid background for text
+                text_bg_rect = pygame.Rect(
+                    text_pos_x + 5,
+                    text_pos_y + 5,
+                    text_width,
+                    text_height
+                )
+                pygame.draw.rect(win, (0, 0, 0), text_bg_rect)  # Black background
+                pygame.draw.rect(win, BORDER_COLOR, text_bg_rect, 1)  # Border
+                
+                # Draw text on top of background
+                win.blit(label_surface, (text_pos_x + 5 + TEXT_PADDING, text_pos_y + 5 + TEXT_PADDING))
+                win.blit(status_surface, (text_pos_x + 5 + TEXT_PADDING, text_pos_y + 5 + TEXT_PADDING + label_surface.get_height() + 5))
             
-            # Draw panel
-            panel_rect = pygame.Rect(GRID_WIDTH, 0, PANEL_WIDTH, GRID_WIDTH)
-            pygame.draw.rect(WIN, PANEL_BG, panel_rect)
-            pygame.draw.line(WIN, BLACK, (GRID_WIDTH, 0), (GRID_WIDTH, GRID_WIDTH), 2)
+            # Draw panel on the right showing batch info
+            panel_rect = pygame.Rect(win_width - 160, 10, 150, 50)
+            pygame.draw.rect(win, (0, 0, 0), panel_rect)
+            pygame.draw.rect(win, BORDER_COLOR, panel_rect, 2)
             
-            title = FONT.render("Parallel Benchmark", True, BLACK)
-            WIN.blit(title, (GRID_WIDTH + 10, 10))
-            
-            batch_info = FONT_SMALL.render(f"Batch {batch_idx // batch_size + 1}/{(len(tasks) + batch_size - 1) // batch_size}", True, BLACK)
-            WIN.blit(batch_info, (GRID_WIDTH + 10, 40))
+            title_surface = FONT_SMALL.render("Parallel Benchmark", True, WHITE)
+            batch_surface = FONT_SMALL.render(f"Batch {batch_num}/{total_batches}", True, (200, 200, 200))
+            win.blit(title_surface, (panel_rect.x + 10, panel_rect.y + 8))
+            win.blit(batch_surface, (panel_rect.x + 10, panel_rect.y + 28))
             
             pygame.display.update()
+            pygame.time.delay(1)  # Small delay to control speed
         
-        # Save screenshot of completed batch
-        screenshot_name = f"screenshots/batch_{batch_idx // batch_size + 1}.png"
-        save_screenshot(WIN, screenshot_name)
-        
-        # Collect results
+        # Collect results from this batch
         for data in batch_data:
-            if data["result"]:
-                exec_time = data["end_time"] - data["start_time"]
-                result = {
-                    "maze_file": os.path.basename(data["filepath"]),
-                    "heuristic": data["heuristic"],
-                    "success": data["result"]["success"],
-                    "cost": data["result"]["cost"],
-                    "nodes_explored": data["result"]["nodes"],
-                    "running_time": exec_time
-                }
-                results.append(result)
+            exec_time = data["end_time"] - data["start_time"] if data["end_time"] else 0
+            results.append({
+                "maze_file": data["maze_file"],
+                "grid_size": f"{data['rows']}x{data['rows']}",
+                "heuristic": data["heuristic"],
+                "success": data["success"],
+                "cost": data["cost"] if data["success"] else float('inf'),
+                "nodes_explored": data["nodes_explored"],
+                "time": exec_time
+            })
         
-        sleep(2)  # Pause to view results
+        # Pause before next batch
+        pygame.time.delay(1500)
+        
+        # Take screenshot of completed batch
+        if not os.path.exists("screenshots"):
+            os.makedirs("screenshots")
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        screenshot_path = f"screenshots/benchmark_batch_{batch_num}_{timestamp}.png"
+        pygame.image.save(win, screenshot_path)
+        print(f"Screenshot saved: {screenshot_path}")
     
     # Save results to CSV
-    if results:
-        output_file = f"benchmark_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
-        fieldnames = ["maze_file", "heuristic", "success", "cost", "nodes_explored", "running_time"]
-        with open(output_file, 'w', newline='') as f:
-            writer = csv.DictWriter(f, fieldnames=fieldnames)
-            writer.writeheader()
-            writer.writerows(results)
-        print(f"\nResults saved to {output_file}")
+    output_file = f"benchmark_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
+    with open(output_file, 'w', newline='') as f:
+        writer = csv.DictWriter(f, fieldnames=["maze_file", "grid_size", "heuristic", "success", "cost", "nodes_explored", "time"])
+        writer.writeheader()
+        writer.writerows(results)
     
+    print(f"Benchmark complete! Results saved to {output_file}")
     return results
-
-# Draw panel for benchmark mode
-def draw_panel_benchmark(win, maze_name, heuristic, exec_time=None, result=None):
-    panel_rect = pygame.Rect(GRID_WIDTH, 0, PANEL_WIDTH, GRID_WIDTH)
-    pygame.draw.rect(win, PANEL_BG, panel_rect)
-    pygame.draw.line(win, BLACK, (GRID_WIDTH, 0), (GRID_WIDTH, GRID_WIDTH), 2)
-    
-    title = FONT.render("Benchmark Mode", True, BLACK)
-    win.blit(title, (GRID_WIDTH + 10, 10))
-    
-    info_text = [
-        f"Maze: {maze_name}",
-        f"Heuristic: {heuristic}",
-        "",
-        "Running..." if result is None else "Complete!"
-    ]
-    
-    y_offset = 50
-    for text in info_text:
-        surface = FONT_SMALL.render(text, True, BLACK)
-        win.blit(surface, (GRID_WIDTH + 10, y_offset))
-        y_offset += 25
-    
-    if result is not None:
-        y_offset += 20
-        result_text = [
-            f"Status: {'SUCCESS' if result.get('success') else 'FAILED'}",
-            f"Cost: {result.get('cost', 'N/A')}",
-            f"Nodes: {result.get('nodes_explored', 'N/A')}",
-            f"Time: {exec_time:.4f}s" if exec_time else ""
-        ]
-        for text in result_text:
-            color = GREEN if result.get('success') else RED
-            surface = FONT_SMALL.render(text, True, color if "Status" in text else BLACK)
-            win.blit(surface, (GRID_WIDTH + 10, y_offset))
-            y_offset += 25
 
 def main(win, width):
     global CURRENT_THEME, HEURISTIC
@@ -1255,25 +1207,28 @@ def main(win, width):
             else:
                 print(f"Failed to load {filename} - check JSON structure")
     
-    def run_benchmark_mode():
-        print("\n=== Running Benchmark Mode (No Visualization) ===")
-        run_benchmark(visualize=False)
-        print("=== Benchmark Complete ===\n")
-    
-    def run_benchmark_visualized():
-        print("\n=== Running Benchmark Mode (With Visualization) ===")
-        run_benchmark(visualize=True, win=win)
-        print("=== Benchmark Complete ===\n")
-    
     def run_benchmark_parallel_mode():
         print("\n=== Running Parallel Benchmark (4 at a time) ===")
         run_benchmark_parallel(batch_size=4)
         print("=== Benchmark Complete ===\n")
     
     def run_benchmark_visual_parallel_mode():
+        nonlocal win
         print("\n=== Running Visual Parallel Benchmark (4 at a time) ===")
-        run_benchmark_visual_parallel(batch_size=4)
+        # Get current window for benchmark
+        run_benchmark_visual_parallel(win, batch_size=4)
         print("=== Benchmark Complete ===\n")
+    
+    def toggle_fullscreen():
+        nonlocal win
+        global FULLSCREEN
+        FULLSCREEN = not FULLSCREEN
+        if FULLSCREEN:
+            win = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
+            print("Fullscreen mode enabled (press ESC to exit)")
+        else:
+            win = pygame.display.set_mode((WIDTH, GRID_WIDTH), pygame.RESIZABLE)
+            print("Windowed mode")
     
     buttons = [
         Button(GRID_WIDTH + 10, 150, 230, 30, "Change Color Theme", cycle_theme),
@@ -1282,10 +1237,8 @@ def main(win, width):
         Button(GRID_WIDTH + 10, 255, 230, 30, "Generate Random Maze", generate_maze),
         Button(GRID_WIDTH + 10, 290, 230, 30, "Save Maze", save_current_maze),
         Button(GRID_WIDTH + 10, 325, 230, 30, "Load Maze", load_maze_file),
-        Button(GRID_WIDTH + 10, 365, 230, 30, "Benchmark (Fast)", run_benchmark_mode),
-        Button(GRID_WIDTH + 10, 400, 230, 30, "Benchmark (Visual)", run_benchmark_visualized),
-        Button(GRID_WIDTH + 10, 435, 230, 30, "Benchmark (Parallel)", run_benchmark_parallel_mode),
-        Button(GRID_WIDTH + 10, 470, 230, 30, "Benchmark (4x Visual)", run_benchmark_visual_parallel_mode),
+        Button(GRID_WIDTH + 10, 365, 230, 30, "Parallel (No GUI)", run_benchmark_parallel_mode),
+        Button(GRID_WIDTH + 10, 400, 230, 30, "Parallel (4x Visual)", run_benchmark_visual_parallel_mode),
     ]
     
     while run:
@@ -1330,6 +1283,13 @@ def main(win, width):
 
             # Handle keyboard
             if event.type == pygame.KEYDOWN:
+                # Press ESC to exit fullscreen
+                if event.key == pygame.K_ESCAPE:
+                    if FULLSCREEN:
+                        FULLSCREEN = False
+                        win = pygame.display.set_mode((WIDTH, GRID_WIDTH), pygame.RESIZABLE)
+                        print("Exited fullscreen mode")
+                
                 # Press SPACE to run algorithm
                 if event.key == pygame.K_SPACE and start and end:
                     for row in grid:
