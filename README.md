@@ -1,6 +1,6 @@
 # A* Pathfinding Visualization
 
-An interactive A* pathfinding algorithm visualizer with configuration panel and benchmarking capabilities.
+An interactive A* pathfinding algorithm visualizer with configuration panel, benchmarking capabilities, and result analysis tools.
 
 ## Features
 
@@ -22,20 +22,36 @@ Located on the left side with the following options:
 2. **Toggle Heuristic**: Switch between Euclidean and Manhattan distance heuristics
 3. **Change Grid Size**: Toggle between 25x25, 50x50, 75x75, and 100x100 grids
 4. **Generate Random Maze**: Create a random maze with barriers (prints seed for reproducibility)
-5. **Save Maze**: Save current maze configuration to a JSON file
-6. **Load Maze**: Load the most recently saved maze file
+5. **Save Maze**: Save current maze configuration to a JSON file (timestamped)
+6. **Load Maze**: Browse and load any saved maze file
 7. **Run Benchmark**: Execute benchmark mode on test mazes
 
 ### Benchmarking Mode
 - Runs multiple mazes from the `test_mazes` folder
 - Tests both Manhattan and Euclidean heuristics
-- Captures metrics:
-  - Running time
-  - Path cost
-  - Nodes explored
+- Captures detailed metrics:
+  - Running time (seconds)
+  - Path cost (total distance)
+  - Nodes explored (search efficiency)
   - Memory usage (MB)
   - Correctness (verified against BFS optimal solution)
-- Outputs results to `benchmark_results.csv`
+- Outputs timestamped results to `benchmark_YYYYMMDD_HHMMSS.csv`
+- Saves screenshots of each benchmark run to `screenshots/` folder
+
+## Project Structure
+
+```
+.
+├── a_sao.py                    # Main visualizer application
+├── visualize_results.py        # Benchmark analysis and visualization tool
+├── test_mazes/                 # Pre-configured test mazes
+│   ├── maze_50_*.json         # 50x50 grid mazes
+│   ├── maze_100_*.json        # 100x100 grid mazes
+│   └── maze_200_*.json        # 200x200 grid mazes
+├── screenshots/                # Auto-generated benchmark screenshots
+├── benchmark_*.csv             # Benchmark results (timestamped)
+└── pattern_comparison.png      # Visualization output
+```
 
 ## Controls
 
@@ -44,6 +60,20 @@ Located on the left side with the following options:
 - **SPACE**: Run A* algorithm
 - **C**: Clear the entire grid
 
+## Installation
+
+### Requirements
+- Python 3.6+
+- pygame
+- pandas (for visualization analysis)
+- matplotlib (for visualization analysis)
+- seaborn (for visualization analysis)
+
+### Install Dependencies
+```bash
+pip install pygame pandas matplotlib seaborn
+```
+
 ## Usage
 
 ### Running the Visualizer
@@ -51,29 +81,82 @@ Located on the left side with the following options:
 python a_sao.py
 ```
 
-### Creating Test Mazes
+### Analyzing Benchmark Results
+After running benchmarks, analyze the results:
+```bash
+python visualize_results.py
+```
+
+This will generate:
+- Heuristic comparison charts (Euclidean vs Manhattan)
+- Performance comparison across grid sizes
+- Pattern comparison within each size category
+- Summary statistics printed to console
+- Output saved to `pattern_comparison.png`
+
+### Creating Custom Test Mazes
 Save maze files in the `test_mazes` folder with this JSON format:
 ```json
 {
   "rows": 50,
-  "start": [5, 5],
-  "end": [45, 45],
-  "barriers": [[10, 10], [10, 11], [10, 12]]
+  "start": [2, 2],
+  "end": [47, 47],
+  "barriers": [[10, 0], [10, 1], [10, 2]]
 }
 ```
 
 ### Running Benchmarks
-1. Prepare maze files in `test_mazes/` folder
-2. Click "Run Benchmark" button in the UI, or
-3. Run from command line (modify code to call `run_benchmark()` directly)
-4. Results saved to `benchmark_results.csv`
+1. Ensure test maze files exist in `test_mazes/` folder
+2. Click "Run Benchmark" button in the UI
+3. Results are automatically saved to:
+   - CSV file: `benchmark_YYYYMMDD_HHMMSS.csv`
+   - Screenshots: `screenshots/benchmark_batch_*_YYYYMMDD_HHMMSS.png`
 
-## Requirements
-- pygame
-- Python 3.6+
+## Test Mazes
 
-## Sample Test Mazes
-Three sample mazes are included:
-- `maze_simple.json`: Simple maze with scattered barriers
-- `maze_corridor.json`: Corridor-style maze
-- `maze_complex.json`: Complex maze with multiple wall patterns
+The project includes 15 pre-configured test mazes across 3 grid sizes and 5 patterns:
+
+### Grid Sizes
+- **50x50**: Small grids for quick testing
+- **100x100**: Medium grids for balanced testing
+- **200x200**: Large grids for performance testing
+
+### Maze Patterns
+- **diagonal**: Diagonal barriers creating zigzag paths
+- **bottleneck**: Narrow passages testing pathfinding efficiency
+- **dense**: High density of randomly placed barriers
+- **manhattan**: Grid-aligned barriers (optimal for Manhattan heuristic)
+- **spiral**: Spiral-shaped barriers creating long paths
+
+### Available Mazes
+- `maze_50_diagonal.json`, `maze_100_diagonal.json`, `maze_200_diagonal.json`
+- `maze_50_bottleneck.json`, `maze_100_bottleneck.json`, `maze_200_bottleneck.json`
+- `maze_50_dense.json`, `maze_100_dense.json`, `maze_200_dense.json`
+- `maze_50_manhattan.json`, `maze_100_manhattan.json`, `maze_200_manhattan.json`
+- `maze_50_spiral.json`, `maze_100_spiral.json`, `maze_200_spiral.json`
+
+## Output Files
+
+- **benchmark_*.csv**: Timestamped CSV files containing detailed benchmark metrics
+- **screenshots/**: Directory containing visualization screenshots from benchmark runs
+- **pattern_comparison.png**: Generated by `visualize_results.py` with comparison charts
+- **maze_*.json**: Saved maze configurations (when using "Save Maze" button)
+
+## Algorithm Details
+
+The implementation uses the A* pathfinding algorithm with:
+- **Priority Queue**: For efficient node selection
+- **Two Heuristics**: 
+  - Euclidean distance: `sqrt((x1-x2)² + (y1-y2)²)`
+  - Manhattan distance: `|x1-x2| + |y1-y2|`
+- **BFS Verification**: Validates path optimality during benchmarking
+- **8-directional movement**: Nodes can move in all 8 directions (diagonal included)
+
+## Performance
+
+The benchmarking system tracks:
+- **Execution Time**: Algorithm runtime in seconds
+- **Path Cost**: Total distance of found path
+- **Nodes Explored**: Number of nodes expanded during search
+- **Memory Usage**: Peak memory consumption in MB
+- **Correctness**: Validates against BFS optimal solution

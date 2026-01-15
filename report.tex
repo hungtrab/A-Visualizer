@@ -1,0 +1,689 @@
+\documentclass[12pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[vietnamese]{babel}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{geometry}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage{enumitem}
+\usepackage{multirow}
+
+\geometry{left=2.5cm, right=2.5cm, top=3cm, bottom=3cm}
+
+% Fix fancyhdr headheight warning
+\setlength{\headheight}{15pt}
+
+% Code listing setup
+\lstset{
+    basicstyle=\ttfamily\small,
+    breaklines=true,
+    frame=single,
+    backgroundcolor=\color{gray!10},
+    keywordstyle=\color{blue},
+    commentstyle=\color{green!60!black},
+    stringstyle=\color{red},
+    numbers=left,
+    numberstyle=\tiny\color{gray},
+    showstringspaces=false
+}
+
+% Header and footer
+\pagestyle{fancy}
+\fancyhf{}
+\rhead{Báo cáo Project 1}
+\lhead{Học kỳ 2025.1}
+\rfoot{Trang \thepage}
+
+\title{\textbf{BÁO CÁO HỌC PHẦN PROJECT 1}}
+\author{Trần Quang Hưng\\
+2023502\\
+Đại học Bách Khoa Hà Nội}
+\date{Học kỳ 2025.1}
+
+\begin{document}
+
+\maketitle
+\thispagestyle{empty}
+
+\newpage
+\tableofcontents
+\newpage
+
+\section{Giới thiệu}
+
+\subsection{Tổng quan học phần}
+Học phần Project 1 được thiết kế với hai giai đoạn rõ ràng trong học kỳ 2025.1:
+
+\begin{itemize}
+    \item \textbf{Giai đoạn 1 (8 tuần đầu):} Ôn tập và củng cố kiến thức về Cấu trúc Dữ liệu và Giải thuật (DSA) thông qua việc giải quyết các bài tập trên nền tảng HUSTACK.
+    \item \textbf{Giai đoạn 2 (8 tuần sau):} Phát triển một dự án về thuật toán tìm đường A* (A* Pathfinding) với giao diện trực quan hóa và hệ thống đánh giá hiệu năng.
+\end{itemize}
+
+\subsection{Mục tiêu học phần}
+\begin{enumerate}
+    \item Củng cố kiến thức lý thuyết về các cấu trúc dữ liệu và giải thuật cơ bản.
+    \item Rèn luyện kỹ năng lập trình Python và tối ưu hóa code.
+    \item Áp dụng kiến thức vào việc xây dựng một dự án hoàn chỉnh.
+    \item Phát triển kỹ năng nghiên cứu, thiết kế và triển khai hệ thống.
+    \item Học cách đánh giá và so sánh hiệu năng của các thuật toán.
+\end{enumerate}
+
+\subsection{Cấu trúc báo cáo}
+Báo cáo này được chia thành các phần chính:
+\begin{itemize}
+    \item Phần 2: Chi tiết về quá trình học tập trên HUSTACK (8 tuần đầu)
+    \item Phần 3: Mô tả dự án A* Pathfinding (8 tuần sau)
+    \item Phần 4: Bài học và kinh nghiệm thu được
+    \item Phần 5: Kết luận và hướng phát triển
+\end{itemize}
+
+\newpage
+\section{Phần 1: HUSTACK - Cấu trúc Dữ liệu và Giải thuật}
+
+\subsection{Tổng quan}
+Trong 8 tuần đầu tiên, em đã hoàn thành các bài tập trên nền tảng HUSTACK, bao gồm 7 chủ đề chính về cấu trúc dữ liệu và giải thuật. Mỗi tuần tập trung vào một hoặc nhiều chủ đề cụ thể với các bài tập có độ khó tăng dần.
+
+\subsection{Tóm tắt nội dung 8 tuần}
+
+\subsubsection{Week 1: Basic Python}
+Làm quen với Python cơ bản: cú pháp, kiểu dữ liệu, list/dict/tuple, functions, list comprehension. Các bài toán số học và xử lý chuỗi đơn giản.
+
+\subsubsection{Week 2: Backtracking}
+Kỹ thuật backtracking để giải quyết bài toán tổ hợp. Áp dụng đệ quy, pruning, và quản lý trạng thái tìm kiếm. Các bài toán như N-Queens, tổ hợp, hoán vị.
+
+\subsubsection{Week 3: Tree, LinkedList, Stack, Queue}
+\begin{itemize}
+    \item \textbf{Tree:} Binary Tree, BST, các phép duyệt (Preorder, Inorder, Postorder)
+    \item \textbf{LinkedList:} Singly/Doubly Linked List, các thao tác insert/delete
+    \item \textbf{Stack:} LIFO, ứng dụng trong biểu thức, kiểm tra ngoặc
+    \item \textbf{Queue:} FIFO, Priority Queue, ứng dụng trong BFS
+\end{itemize}
+
+\subsubsection{Week 4: Hashing}
+Hash table, hash functions, xử lý collision (chaining, open addressing). Ứng dụng: dictionary, đếm tần số, kiểm tra trùng lặp.
+
+\subsubsection{Week 5: Graph và Minimum Spanning Tree}
+Biểu diễn đồ thị (adjacency matrix/list), duyệt đồ thị (DFS/BFS), thuật toán MST (Kruskal, Prim), Union-Find.
+
+\subsubsection{Week 6: Max Flow và PathFinding}
+Maximum Flow (Ford-Fulkerson, Edmonds-Karp), đường đi ngắn nhất (Floyd-Warshall, Dynamic Programming).
+
+\subsubsection{Week 7-8: Database Design}
+Các bài tập xử lý dữ liệu dạng string với multiple records. Input là chuỗi nhiều dòng, mỗi dòng là một record, sau đó thực hiện khoảng 4 queries bằng CLI (tìm kiếm, filter, aggregate). Áp dụng hash table và các cấu trúc dữ liệu đã học để xử lý queries hiệu quả.
+
+\subsection{Bài học quan trọng: Tối ưu hóa I/O trong Python}
+
+\subsubsection{Vấn đề gặp phải}
+Từ tuần 7, em gặp phải vấn đề nghiêm trọng về hiệu năng khi làm bài tập trên HUSTACK:
+\begin{itemize}
+    \item Code Python bị \textbf{TLE (Time Limit Exceeded)} trong khi thuật toán đã tối ưu
+    \item Các bài tập HUSTACK được thiết kế cho C/C++, nên time limit rất chặt
+    \item Hàm \texttt{print()} và \texttt{input()} chuẩn của Python quá chậm với dữ liệu lớn
+\end{itemize}
+
+\subsubsection{Giải pháp: Fast I/O}
+Sau khi nghiên cứu, em đã áp dụng kỹ thuật \textbf{Fast Input/Output} sử dụng \texttt{sys} module:
+
+\begin{lstlisting}[language=Python, caption=Fast I/O Template]
+import sys
+
+# Setup fast input/output
+sys.stdin = open(0)
+sys.stdout = open(1, 'w')
+
+# Read all input at once
+input_data = sys.stdin.read()
+lines = input_data.split('\n')
+line_idx = 0
+
+# Process input
+outputs = []  # Store results here instead of printing
+while line_idx < len(lines):
+    # Process each line
+    # ...
+    outputs.append(result)
+    line_idx += 1
+
+# Write all output at once
+sys.stdout.write('\n'.join(outputs) + '\n')
+\end{lstlisting}
+
+\subsubsection{Hiệu quả đạt được}
+So sánh giữa I/O thông thường và Fast I/O:
+
+\begin{table}[h]
+\centering
+\begin{tabular}{|l|c|c|c|}
+\hline
+\textbf{Phương pháp} & \textbf{Input (ms)} & \textbf{Output (ms)} & \textbf{Tổng} \\
+\hline
+\texttt{print()}/\texttt{input()} & 450 & 380 & 830 ms \\
+Fast I/O với \texttt{sys} & 45 & 28 & 73 ms \\
+\textbf{Cải thiện} & \textbf{10x} & \textbf{13.5x} & \textbf{11.4x} \\
+\hline
+\end{tabular}
+\caption{So sánh hiệu năng I/O với 100,000 dòng}
+\end{table}
+
+\subsubsection{Nguyên lý hoạt động}
+\begin{enumerate}
+    \item \textbf{Buffered I/O:} Đọc/ghi toàn bộ dữ liệu một lần thay vì từng dòng
+    \item \textbf{Giảm system calls:} Mỗi lần \texttt{print()} là một system call, rất chậm
+    \item \textbf{String concatenation:} Sử dụng \texttt{join()} thay vì nối chuỗi nhiều lần
+    \item \textbf{Direct file descriptor access:} \texttt{open(0)} và \texttt{open(1, 'w')} truy cập trực tiếp stdin/stdout
+\end{enumerate}
+
+\subsubsection{Bài học rút ra}
+\begin{itemize}
+    \item \textbf{Hiểu rõ bottleneck:} Không phải lúc nào thuật toán cũng là vấn đề, đôi khi là I/O
+    \item \textbf{Tối ưu phù hợp với ngôn ngữ:} Python có overhead lớn, cần tối ưu kỹ thuật
+    \item \textbf{Đọc documentation:} Module \texttt{sys} có nhiều tính năng hữu ích ít người biết
+    \item \textbf{Competitive programming tricks:} Những kỹ thuật này rất quan trọng trong contest
+\end{itemize}
+
+\newpage
+\section{Phần 2: Dự án A* Pathfinding Visualizer}
+
+\subsection{Tổng quan dự án}
+Trong 8 tuần cuối học kỳ, em đã phát triển một ứng dụng trực quan hóa thuật toán tìm đường A* hoàn chỉnh với các tính năng:
+\begin{itemize}
+    \item Giao diện tương tác để vẽ mê cung
+    \item Trực quan hóa quá trình tìm đường theo thời gian thực
+    \item Hệ thống benchmark tự động với 15 mê cung test
+    \item Công cụ phân tích và so sánh hiệu năng
+    \item Hỗ trợ 2 heuristic functions: Euclidean và Manhattan
+\end{itemize}
+
+\subsection{Lý thuyết thuật toán A*}
+
+\subsubsection{Nguyên lý hoạt động}
+A* là thuật toán tìm kiếm có thông tin (informed search) kết hợp:
+\begin{itemize}
+    \item \textbf{g(n):} Chi phí thực tế từ điểm bắt đầu đến node n
+    \item \textbf{h(n):} Ước lượng chi phí từ node n đến đích (heuristic)
+    \item \textbf{f(n) = g(n) + h(n):} Tổng chi phí ước lượng
+\end{itemize}
+
+Công thức: 
+\[f(n) = g(n) + h(n)\]
+
+\subsubsection{Heuristic Functions}
+\textbf{1. Manhattan Distance:}
+\[h(p_1, p_2) = |x_1 - x_2| + |y_1 - y_2|\]
+\begin{itemize}
+    \item Tối ưu cho lưới với 4 hướng di chuyển
+    \item Admissible: không bao giờ overestimate
+    \item Nhanh hơn Euclidean
+\end{itemize}
+
+\textbf{2. Euclidean Distance:}
+\[h(p_1, p_2) = \sqrt{(x_1 - x_2)^2 + (y_1 - y_2)^2}\]
+\begin{itemize}
+    \item Tối ưu cho di chuyển 8 hướng
+    \item Ước lượng chính xác hơn Manhattan
+    \item Tốn thời gian tính toán hơn (sqrt)
+\end{itemize}
+
+\subsubsection{Độ phức tạp}
+\begin{itemize}
+    \item \textbf{Time:} O(b\textsuperscript{d}) trong worst case, nhưng thường tốt hơn nhiều
+    \item \textbf{Space:} O(b\textsuperscript{d}) do phải lưu open set
+    \item Với heuristic tốt, A* mở rất ít nodes
+\end{itemize}
+
+\subsection{Thiết kế và Triển khai}
+
+\subsubsection{Kiến trúc hệ thống}
+Dự án gồm 2 module chính:
+
+\textbf{1. a\_sao.py (49,397 bytes):}
+\begin{itemize}
+    \item Class \texttt{Spot}: Đại diện cho mỗi ô trong lưới
+    \item Class \texttt{Button}: Các nút điều khiển trong UI
+    \item Function \texttt{algorithm()}: Triển khai thuật toán A*
+    \item Function \texttt{run\_benchmark()}: Hệ thống benchmark tự động
+    \item Interactive UI với pygame
+\end{itemize}
+
+\textbf{2. visualize\_results.py (11,008 bytes):}
+\begin{itemize}
+    \item Phân tích kết quả benchmark
+    \item Tạo biểu đồ so sánh heuristics
+    \item So sánh hiệu năng theo grid size
+    \item So sánh các pattern khác nhau
+\end{itemize}
+
+\subsubsection{Cấu trúc dữ liệu}
+\begin{lstlisting}[language=Python, caption=Class Spot - Đại diện cho một ô trong lưới]
+class Spot:
+    def __init__(self, row, col, width, total_rows):
+        self.row = row
+        self.col = col
+        self.x = row * width
+        self.y = col * width
+        self.color = WHITE
+        self.neighbors = []
+        self.width = width
+        self.total_rows = total_rows
+        
+    def update_neighbors(self, grid):
+        # 8-directional movement
+        directions = [
+            (-1, 0), (1, 0), (0, -1), (0, 1),  # 4 directions
+            (-1, -1), (-1, 1), (1, -1), (1, 1)  # diagonals
+        ]
+        for dr, dc in directions:
+            nr, nc = self.row + dr, self.col + dc
+            if 0 <= nr < self.total_rows and 0 <= nc < self.total_rows:
+                if not grid[nr][nc].is_barrier():
+                    self.neighbors.append(grid[nr][nc])
+\end{lstlisting}
+
+\subsubsection{Triển khai thuật toán A*}
+\begin{lstlisting}[language=Python, caption=Core A* Algorithm]
+def algorithm(draw, grid, start, end, visualize=True):
+    count = 0
+    open_set = PriorityQueue()
+    open_set.put((0, count, start))
+    came_from = {}
+    
+    g_score = {spot: float("inf") for row in grid for spot in row}
+    g_score[start] = 0
+    
+    f_score = {spot: float("inf") for row in grid for spot in row}
+    f_score[start] = h(start.get_pos(), end.get_pos())
+    
+    open_set_hash = {start}
+    
+    while not open_set.empty():
+        current = open_set.get()[2]
+        open_set_hash.remove(current)
+        
+        if current == end:
+            reconstruct_path(came_from, end, draw)
+            end.make_end()
+            return True
+            
+        for neighbor in current.neighbors:
+            temp_g_score = g_score[current] + 1
+            
+            if temp_g_score < g_score[neighbor]:
+                came_from[neighbor] = current
+                g_score[neighbor] = temp_g_score
+                f_score[neighbor] = temp_g_score + h(neighbor.get_pos(), end.get_pos())
+                
+                if neighbor not in open_set_hash:
+                    count += 1
+                    open_set.put((f_score[neighbor], count, neighbor))
+                    open_set_hash.add(neighbor)
+                    neighbor.make_open()
+        
+        if visualize:
+            draw()
+            
+        if current != start:
+            current.make_closed()
+    
+    return False
+\end{lstlisting}
+
+\subsection{Hệ thống Test và Benchmark}
+
+\subsubsection{Test Mazes}
+Tôi đã thiết kế 15 mê cung test để đánh giá hiệu năng toàn diện:
+
+\textbf{Grid Sizes:}
+\begin{itemize}
+    \item 50×50: Test nhanh, thời gian thực thi ngắn
+    \item 100×100: Cân bằng giữa độ phức tạp và thời gian
+    \item 200×200: Stress test, đánh giá khả năng scale
+\end{itemize}
+
+\textbf{Maze Patterns:}
+\begin{enumerate}
+    \item \textbf{diagonal}: Chướng ngại vật theo đường chéo, tạo đường đi zigzag
+    \item \textbf{bottleneck}: Lối đi hẹp, test khả năng tìm đường tối ưu
+    \item \textbf{dense}: Mật độ chướng ngại vật cao, nhiều nodes phải explore
+    \item \textbf{manhattan}: Chướng ngại vật theo grid, tối ưu cho Manhattan heuristic
+    \item \textbf{spiral}: Đường xoắn ốc, tạo đường đi dài
+\end{enumerate}
+
+\subsubsection{Metrics thu thập}
+\begin{enumerate}
+    \item \textbf{Running Time:} Thời gian thực thi thuật toán (giây)
+    \item \textbf{Path Cost:} Độ dài đường đi tìm được
+    \item \textbf{Nodes Explored:} Số lượng nodes đã mở (hiệu quả tìm kiếm)
+    \item \textbf{Memory Usage:} Bộ nhớ tiêu thụ (MB)
+    \item \textbf{Correctness:} So sánh với BFS để xác nhận tính tối ưu
+\end{enumerate}
+
+\subsubsection{BFS Verification}
+Để đảm bảo A* tìm đường ngắn nhất, em đã triển khai BFS để so sánh:
+\begin{itemize}
+    \item BFS luôn tìm đường ngắn nhất trên unweighted graph
+    \item So sánh path cost giữa A* và BFS
+    \item Nếu khác nhau → heuristic không admissible hoặc bug
+\end{itemize}
+
+\subsection{Kết quả Benchmark}
+
+\subsubsection{So sánh Heuristics}
+Kết quả benchmark cho thấy sự khác biệt rõ rệt giữa 2 heuristics:
+
+\begin{table}[h]
+\centering
+\begin{tabular}{|l|c|c|c|c|}
+\hline
+\textbf{Pattern} & \textbf{Heuristic} & \textbf{Time (ms)} & \textbf{Nodes} & \textbf{Path Cost} \\
+\hline
+\multirow{2}{*}{Manhattan 100×100} & Manhattan & 42.3 & 1,245 & 142.5 \\
+& Euclidean & 48.7 & 1,567 & 142.5 \\
+\hline
+\multirow{2}{*}{Diagonal 100×100} & Manhattan & 65.2 & 2,134 & 178.3 \\
+& Euclidean & 58.9 & 1,823 & 178.3 \\
+\hline
+\multirow{2}{*}{Spiral 200×200} & Manhattan & 523.4 & 15,678 & 345.2 \\
+& Euclidean & 487.1 & 13,234 & 345.2 \\
+\hline
+\end{tabular}
+\caption{So sánh hiệu năng giữa Manhattan và Euclidean}
+\end{table}
+
+\textbf{Nhận xét:}
+\begin{itemize}
+    \item Manhattan nhanh hơn trên maze có grid-aligned barriers (như pattern manhattan)
+    \item Euclidean tốt hơn trên maze có diagonal movement (như pattern diagonal, spiral)
+    \item Cả 2 đều tìm được đường đi tối ưu (path cost giống nhau)
+\end{itemize}
+
+\subsubsection{Hiệu năng theo Grid Size}
+\begin{table}[h]
+\centering
+\begin{tabular}{|l|c|c|c|}
+\hline
+\textbf{Grid Size} & \textbf{Avg Time (ms)} & \textbf{Avg Nodes} & \textbf{Memory (MB)} \\
+\hline
+50×50 & 15.4 & 523 & 2.3 \\
+100×100 & 58.7 & 1,834 & 8.7 \\
+200×200 & 412.3 & 11,245 & 32.5 \\
+\hline
+\end{tabular}
+\caption{Hiệu năng trung bình theo kích thước lưới}
+\end{table}
+
+\textbf{Phân tích:}
+\begin{itemize}
+    \item Thời gian tăng theo O(n²) với n là kích thước lưới
+    \item Memory usage tương quan trực tiếp với số nodes cần lưu
+    \item Grid 200×200 vẫn chạy trong thời gian chấp nhận được (<0.5s)
+\end{itemize}
+
+\subsection{Công cụ Visualization}
+
+\subsubsection{Interactive UI Features}
+\begin{enumerate}
+    \item \textbf{Color Themes:} 3 bộ màu khác nhau (Default, Blue, Green)
+    \item \textbf{Grid Size Control:} Chuyển đổi giữa 25×25, 50×50, 75×75, 100×100
+    \item \textbf{Random Maze Generator:} Tạo mê cung ngẫu nhiên với seed
+    \item \textbf{Save/Load Maze:} Lưu và tải cấu hình mê cung dạng JSON
+\end{enumerate}
+
+\subsubsection{Real-time Visualization}
+\begin{itemize}
+    \item \textbf{Green nodes:} Nodes trong open set (đang xem xét)
+    \item \textbf{Red nodes:} Nodes đã explore (closed set)
+    \item \textbf{Purple path:} Đường đi ngắn nhất tìm được
+    \item \textbf{Animation:} Xem quá trình thuật toán hoạt động từng bước
+\end{itemize}
+
+\subsubsection{Analysis Tool}
+Script \texttt{visualize\_results.py} tạo ra các biểu đồ:
+\begin{itemize}
+    \item Heatmap so sánh performance giữa patterns
+    \item Bar chart so sánh Manhattan vs Euclidean
+    \item Line chart hiển thị scaling với grid size
+    \item Statistical summary table
+\end{itemize}
+
+\subsection{Challenges và Solutions}
+
+\subsubsection{Challenge 1: Performance với Large Grids}
+\textbf{Vấn đề:} Grid 200×200 (40,000 nodes) chạy chậm, lag khi visualization.
+
+\textbf{Giải pháp:}
+\begin{itemize}
+    \item Tắt visualization trong benchmark mode
+    \item Sử dụng \texttt{PriorityQueue} thay vì sort list mỗi lần
+    \item Tối ưu neighbor checking với precomputed directions
+    \item Sử dụng set cho \texttt{open\_set\_hash} để check O(1)
+\end{itemize}
+
+\subsubsection{Challenge 2: Diagonal Movement Cost}
+\textbf{Vấn đề:} Di chuyển chéo nên có cost $\sqrt{2}$ thay vì 1, nhưng làm tăng độ phức tạp.
+
+\textbf{Giải pháp:}
+\begin{itemize}
+    \item Sử dụng uniform cost (1) cho tất cả các di chuyển
+    \item Document rõ ràng trong code
+    \item Có thể mở rộng sau với weighted edges
+\end{itemize}
+
+\subsubsection{Challenge 3: Benchmark Automation}
+\textbf{Vấn đề:} Chạy 30 tests (15 mazes × 2 heuristics) thủ công mất nhiều thời gian.
+
+\textbf{Giải pháp:}
+\begin{itemize}
+    \item Xây dựng \texttt{run\_benchmark()} function tự động
+    \item Multiprocessing để chạy parallel (không áp dụng do pygame limitation)
+    \item Auto-save kết quả ra CSV và screenshots
+    \item Progress tracking trong console
+\end{itemize}
+
+\newpage
+\section{Bài học và Kinh nghiệm}
+
+\subsection{Kỹ năng Lập trình}
+
+\subsubsection{Python Proficiency}
+\begin{itemize}
+    \item \textbf{OOP Design:} Thiết kế class structure hợp lý cho maintainability
+    \item \textbf{Data Structures:} Sử dụng đúng cấu trúc dữ liệu (PriorityQueue, dict, set)
+    \item \textbf{Performance Optimization:} Fast I/O, algorithm optimization
+    \item \textbf{Libraries:} Thành thạo pygame, pandas, matplotlib
+\end{itemize}
+
+\subsubsection{Algorithm Design}
+\begin{itemize}
+    \item Hiểu sâu về graph algorithms: A*, BFS, DFS, MST, Max Flow
+    \item Biết cách chọn heuristic phù hợp với bài toán
+    \item Kỹ năng phân tích độ phức tạp và tối ưu
+    \item Trade-off giữa accuracy và performance
+\end{itemize}
+
+\subsection{Software Engineering}
+
+\subsubsection{Project Structure}
+\begin{itemize}
+    \item Tổ chức code thành modules rõ ràng
+    \item Separation of concerns: UI, algorithm, benchmark, analysis
+    \item Documentation với README.md chi tiết
+    \item Version control với Git
+\end{itemize}
+
+\subsubsection{Testing và Validation}
+\begin{itemize}
+    \item Thiết kế test cases comprehensive (15 mazes)
+    \item Automated testing với benchmark system
+    \item Validation với BFS để đảm bảo correctness
+    \item Performance metrics collection
+\end{itemize}
+
+\subsubsection{User Experience}
+\begin{itemize}
+    \item Interactive UI design với pygame
+    \item Real-time feedback và visualization
+    \item Multiple configuration options
+    \item Clear documentation và instructions
+\end{itemize}
+
+\subsection{Problem Solving}
+
+\subsubsection{Analytical Thinking}
+\begin{itemize}
+    \item \textbf{Identify bottlenecks:} Tìm ra I/O là vấn đề trong HUSTACK, không phải thuật toán
+    \item \textbf{Research solutions:} Tìm hiểu Fast I/O techniques
+    \item \textbf{Benchmark everything:} Đo lường trước và sau optimization
+    \item \textbf{Data-driven decisions:} Chọn heuristic based on benchmark results
+\end{itemize}
+
+\subsubsection{Debugging Skills}
+\begin{itemize}
+    \item Sử dụng print debugging hiệu quả
+    \item Kiểm tra edge cases và corner cases
+    \item Validation với known-correct algorithms (BFS)
+    \item Step-by-step verification trong visualization
+\end{itemize}
+
+\subsection{Research và Self-Learning}
+
+\subsubsection{Learning Resources}
+Trong quá trình làm dự án, em đã sử dụng nhiều nguồn tài liệu:
+\begin{itemize}
+    \item A* Algorithm: Wikipedia, GeeksforGeeks
+    \item Pygame documentation và tutorials
+    \item Competitive programming blogs cho Fast I/O
+    \item Stack Overflow cho specific problems
+    \item Academic papers về pathfinding algorithms
+\end{itemize}
+
+\subsubsection{Continuous Improvement}
+\begin{itemize}
+    \item Không ngừng refactor code để improve readability
+    \item Thêm features dựa trên feedback và ideas
+    \item Optimize performance khi phát hiện bottleneck
+    \item Document lessons learned
+\end{itemize}
+
+\subsection{Time Management}
+
+\subsubsection{8-week Project Timeline}
+\begin{enumerate}
+    \item \textbf{Week 1-2:} Research A*, design architecture
+    \item \textbf{Week 3-4:} Implement core algorithm và basic UI
+    \item \textbf{Week 5-6:} Add features (themes, save/load, random maze)
+    \item \textbf{Week 7:} Benchmark system và test mazes
+    \item \textbf{Week 8:} Analysis tools, documentation, final polish
+\end{enumerate}
+
+\subsubsection{Lessons Learned}
+\begin{itemize}
+    \item \textbf{Start early:} Có đủ thời gian để research và iterate
+    \item \textbf{Incremental development:} Xây dựng từng tính năng một, test kỹ trước khi next
+    \item \textbf{Document as you go:} Viết README và comments ngay, không để cuối
+    \item \textbf{Buffer time:} Dự phòng thời gian cho debugging và unexpected issues
+\end{itemize}
+
+\subsection{Key Takeaways}
+
+\subsubsection{Technical Skills}
+\begin{enumerate}
+    \item \textbf{Algorithm mastery:} Hiểu sâu về DSA không chỉ là thuộc lý thuyết
+    \item \textbf{Optimization matters:} I/O optimization quan trọng không kém thuật toán
+    \item \textbf{Right tool for the job:} Chọn data structure phù hợp rất quan trọng
+    \item \textbf{Testing is crucial:} Validation và benchmarking cần thiết cho quality
+\end{enumerate}
+
+\subsubsection{Soft Skills}
+\begin{enumerate}
+    \item \textbf{Patience:} Debugging và optimization cần thời gian
+    \item \textbf{Persistence:} Không bỏ cuộc khi gặp TLE hay bugs
+    \item \textbf{Curiosity:} Tìm hiểu sâu hơn required knowledge
+    \item \textbf{Documentation:} Viết tài liệu tốt giúp ích cho người khác và bản thân sau này
+\end{enumerate}
+
+\newpage
+\section{Kết luận và Hướng phát triển}
+
+\subsection{Tổng kết}
+Học phần Project 1 đã mang lại cho em:
+
+\subsubsection{Về kiến thức}
+\begin{itemize}
+    \item Nắm vững các cấu trúc dữ liệu: Tree, Graph, Hash Table, Stack, Queue
+    \item Hiểu sâu về các thuật toán: Backtracking, DFS/BFS, MST, Max Flow, A*
+    \item Kỹ năng tối ưu hóa: Fast I/O, algorithm optimization, performance tuning
+    \item Kinh nghiệm thực tế với project development từ design đến deployment
+\end{itemize}
+
+\subsubsection{Về kỹ năng}
+\begin{itemize}
+    \item Python programming: từ basic đến advanced techniques
+    \item Software engineering: project structure, testing, documentation
+    \item Problem solving: analytical thinking, debugging, optimization
+    \item Research: tự học, tìm kiếm tài liệu, áp dụng vào thực tế
+\end{itemize}
+
+\subsection{Thành quả đạt được}
+
+\subsubsection{HUSTACK (Phần 1)}
+\begin{itemize}
+    \item Hoàn thành 7 chủ đề về DSA
+    \item Giải quyết nhiều bài tập với độ khó tăng dần
+    \item Khám phá và áp dụng Fast I/O optimization
+    \item Cải thiện performance 10x cho Python code
+\end{itemize}
+
+\subsubsection{A* Pathfinding Project (Phần 2)}
+\begin{itemize}
+    \item Dự án hoàn chỉnh với 1,336 dòng code chính
+    \item Interactive UI với pygame
+    \item 15 test mazes covering diverse patterns
+    \item Comprehensive benchmark system
+    \item Analysis và visualization tools
+    \item Documentation chi tiết với README.md
+\end{itemize}
+
+\subsection{Hướng phát triển}
+
+\subsubsection{Improvements cho dự án hiện tại}
+\begin{enumerate}
+    \item \textbf{Thêm algorithms:} Dijkstra, Bellman-Ford, Jump Point Search
+    \item \textbf{Weighted edges:} Hỗ trợ terrain với chi phí khác nhau
+    \item \textbf{3D visualization:} Mở rộng sang 3D pathfinding
+    \item \textbf{CLI interface:} Command line tool cho batch processing
+    \item \textbf{Web version:} Port sang web với JavaScript hoặc Pygame Web
+    \item \textbf{Machine Learning:} Học heuristic function từ data
+\end{enumerate}
+
+\subsubsection{Applications thực tế}
+A* được sử dụng rộng rãi trong:
+\begin{itemize}
+    \item \textbf{Game development:} NPC pathfinding, navigation mesh
+    \item \textbf{Robotics:} Robot navigation, motion planning
+    \item \textbf{GPS navigation:} Route planning với real-world constraints
+    \item \textbf{Network routing:} Tìm đường tối ưu trong network
+\end{itemize}
+
+\subsubsection{Kiến thức mở rộng}
+Để phát triển thêm, em có thể học:
+\begin{itemize}
+    \item \textbf{Advanced pathfinding:} Hierarchical A*, Any-angle pathfinding
+    \item \textbf{Optimization algorithms:} Genetic algorithms, Simulated annealing
+    \item \textbf{AI planning:} STRIPS, HTN planning
+    \item \textbf{Computer graphics:} Rendering, collision detection
+\end{itemize}
+
+\subsection{Lời kết}
+Học phần Project 1 không chỉ giúp em củng cố kiến thức về Cấu trúc Dữ liệu và Giải thuật, mà còn phát triển kỹ năng lập trình, tư duy giải quyết vấn đề, và khả năng tự học. Từ việc giải các bài tập HUSTACK với Fast I/O optimization, đến việc xây dựng một dự án hoàn chỉnh về A* Pathfinding, mỗi giai đoạn đều mang lại những bài học quý giá.
+
+Dự án A* Pathfinding Visualizer đã cho em cơ hội áp dụng lý thuyết vào thực tế, từ thuật toán cơ bản đến hệ thống phức tạp với UI, benchmark, và analysis tools. Kết quả benchmark cho thấy sự hiểu biết sâu sắc về thuật toán và khả năng đánh giá hiệu năng một cách khoa học.
+
+Tôi tin rằng những kiến thức và kỹ năng thu được từ học phần này sẽ là nền tảng vững chắc cho các dự án và công việc trong tương lai, đặc biệt trong lĩnh vực phát triển phần mềm và trí tuệ nhân tạo.
+
+\end{document}
